@@ -1,8 +1,26 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { useUser } from './hooks/useUser';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
+
+function DemoActivator({ children }) {
+  const [params] = useSearchParams();
+
+  useEffect(() => {
+    if (params.get('demo') === 'true') {
+      sessionStorage.setItem('demo', 'true');
+    }
+    if (sessionStorage.getItem('demo') === 'true') {
+      import('./demo/mockFetch').then(({ mockFetch }) => {
+        window.__realFetch = window.fetch;
+        window.fetch = (url, opts) => mockFetch(url, opts);
+      });
+    }
+  }, []);
+
+  return children;
+}
 
 export default function App() {
   const { user, loading, refresh } = useUser();
@@ -16,12 +34,14 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Landing />} />
-      <Route
-        path="/dashboard/*"
-        element={user ? <Dashboard user={user} refresh={refresh} /> : <Navigate to="/" replace />}
-      />
-    </Routes>
+    <DemoActivator>
+      <Routes>
+        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Landing />} />
+        <Route
+          path="/dashboard/*"
+          element={user ? <Dashboard user={user} refresh={refresh} /> : <Navigate to="/" replace />}
+        />
+      </Routes>
+    </DemoActivator>
   );
 }

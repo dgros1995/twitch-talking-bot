@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../demo/apiFetch';
 
 const s = {
   page: { maxWidth: 900 },
@@ -40,7 +41,7 @@ export default function Commands() {
   const [saving, setSaving] = useState(false);
 
   const load = () => {
-    fetch('/api/commands', { credentials: 'include' })
+    apiFetch('/api/commands', { credentials: 'include' })
       .then(r => r.json())
       .then(setCommands)
       .catch(console.error);
@@ -62,7 +63,7 @@ export default function Commands() {
     try {
       const url = editing ? `/api/commands/${editing.id}` : '/api/commands';
       const method = editing ? 'PUT' : 'POST';
-      const res = await fetch(url, { method, credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const res = await apiFetch(url, { method, credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       setShowModal(false);
@@ -73,12 +74,12 @@ export default function Commands() {
 
   const remove = async (id) => {
     if (!confirm('Delete this command?')) return;
-    await fetch(`/api/commands/${id}`, { method: 'DELETE', credentials: 'include' });
+    await apiFetch(`/api/commands/${id}`, { method: 'DELETE', credentials: 'include' });
     load();
   };
 
   const toggleEnabled = async (cmd) => {
-    await fetch(`/api/commands/${cmd.id}`, {
+    await apiFetch(`/api/commands/${cmd.id}`, {
       method: 'PUT', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...cmd, enabled: !cmd.enabled }),

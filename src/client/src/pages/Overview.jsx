@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiFetch } from '../demo/apiFetch';
 
 const styles = {
   page: { maxWidth: 720, margin: '0 auto' },
@@ -77,7 +78,7 @@ export default function Overview({ user, refresh }) {
     setError('');
     try {
       const endpoint = botActive ? '/api/bot/leave' : '/api/bot/join';
-      const res = await fetch(endpoint, { method: 'POST', credentials: 'include' });
+      const res = await apiFetch(endpoint, { method: 'POST', credentials: 'include' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       refresh();

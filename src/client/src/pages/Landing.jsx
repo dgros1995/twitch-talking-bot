@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const styles = {
   page: {
@@ -67,6 +68,21 @@ const styles = {
     transition: 'background 0.15s',
     textDecoration: 'none',
   },
+  btnRow: { display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' },
+  demoBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    background: 'transparent',
+    color: 'var(--text-secondary)',
+    fontWeight: 600,
+    fontSize: 15,
+    padding: '14px 28px',
+    borderRadius: 8,
+    border: '1px solid var(--border)',
+    cursor: 'pointer',
+    transition: 'border-color 0.15s, color 0.15s',
+  },
 };
 
 const FEATURES = [
@@ -77,6 +93,13 @@ const FEATURES = [
 ];
 
 export default function Landing() {
+  const navigate = useNavigate();
+
+  const startDemo = () => {
+    sessionStorage.setItem('demo', 'true');
+    navigate('/dashboard');
+  };
+
   return (
     <div style={styles.page}>
       <div>
@@ -97,12 +120,17 @@ export default function Landing() {
           </div>
         ))}
       </div>
-      <a href="/auth/login" style={styles.loginBtn}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z" />
-        </svg>
-        Login with Twitch
-      </a>
+      <div style={styles.btnRow}>
+        <a href="/auth/login" style={styles.loginBtn}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z" />
+          </svg>
+          Login with Twitch
+        </a>
+        <button style={styles.demoBtn} onClick={startDemo}>
+          ▶ Try Demo
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../demo/apiFetch';
 
 const s = {
   page: { maxWidth: 720 },
@@ -35,11 +36,11 @@ export default function Loyalty() {
   const [err, setErr] = useState('');
 
   const loadSettings = () => {
-    fetch('/api/loyalty', { credentials: 'include' }).then(r => r.json()).then(setSettings).catch(console.error);
+    apiFetch('/api/loyalty', { credentials: 'include' }).then(r => r.json()).then(setSettings).catch(console.error);
   };
 
   const loadLeaderboard = () => {
-    fetch('/api/loyalty/leaderboard', { credentials: 'include' }).then(r => r.json()).then(setLeaderboard).catch(console.error);
+    apiFetch('/api/loyalty/leaderboard', { credentials: 'include' }).then(r => r.json()).then(setLeaderboard).catch(console.error);
   };
 
   useEffect(() => { loadSettings(); loadLeaderboard(); }, []);
@@ -47,7 +48,7 @@ export default function Loyalty() {
   const save = async () => {
     setSaving(true); setMsg(''); setErr('');
     try {
-      const res = await fetch('/api/loyalty', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
+      const res = await apiFetch('/api/loyalty', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       setSettings(data);

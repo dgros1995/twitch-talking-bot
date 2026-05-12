@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../demo/apiFetch';
 
 const s = {
   page: { maxWidth: 900 },
@@ -40,7 +41,7 @@ export default function Timers() {
   const [saving, setSaving] = useState(false);
 
   const load = () => {
-    fetch('/api/timers', { credentials: 'include' }).then(r => r.json()).then(setTimers).catch(console.error);
+    apiFetch('/api/timers', { credentials: 'include' }).then(r => r.json()).then(setTimers).catch(console.error);
   };
 
   useEffect(load, []);
@@ -53,7 +54,7 @@ export default function Timers() {
     setSaving(true); setError('');
     try {
       const url = editing ? `/api/timers/${editing.id}` : '/api/timers';
-      const res = await fetch(url, { method: editing ? 'PUT' : 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const res = await apiFetch(url, { method: editing ? 'PUT' : 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       setShowModal(false);
@@ -64,12 +65,12 @@ export default function Timers() {
 
   const remove = async (id) => {
     if (!confirm('Delete this timer?')) return;
-    await fetch(`/api/timers/${id}`, { method: 'DELETE', credentials: 'include' });
+    await apiFetch(`/api/timers/${id}`, { method: 'DELETE', credentials: 'include' });
     load();
   };
 
   const toggleEnabled = async (t) => {
-    await fetch(`/api/timers/${t.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...t, enabled: !t.enabled }) });
+    await apiFetch(`/api/timers/${t.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...t, enabled: !t.enabled }) });
     load();
   };
 
