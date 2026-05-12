@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TwitchBot Dashboard — Preview</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#0e0e10;--bg-secondary:#18181b;--bg-card:#1f1f23;--bg-hover:#26262c;
+  --border:#2a2a2d;--accent:#9147ff;--accent-hover:#a970ff;--accent-light:#bf94ff;
+  --text-primary:#efeff1;--text-secondary:#adadb8;--text-muted:#6b6b7b;
+  --danger:#eb0400;--success:#00c853;--radius:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:var(--bg-primary);color:var(--text-primary);font-size:14px;line-height:1.5;min-height:100vh}
+button{cursor:pointer;font-family:inherit;font-size:14px;border:none;outline:none;transition:background .15s,opacity .15s}
+input,textarea,select{font-family:inherit;font-size:14px;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);border-radius:var(--radius);padding:8px 12px;outline:none;width:100%}
+input:focus,textarea:focus{border-color:var(--accent)}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg-secondary)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;min-width:220px;background:var(--bg-secondary);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.brand{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.brand-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px}
+nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px}
+.nav-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;padding:8px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;font-weight:500;color:var(--text-secondary);cursor:pointer;transition:background .12s,color .12s}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary)}
+.nav-item.active{color:var(--accent-light);background:rgba(145,71,255,.15)}
+.user-row{padding:14px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.user-name{font-weight:600;font-size:13px;flex:1}
+.logout-btn{background:none;color:var(--text-muted);padding:4px;border-radius:4px;font-size:16px;line-height:1}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.demo-banner{background:linear-gradient(90deg,#9147ff22,#9147ff44,#9147ff22);border-bottom:1px solid #9147ff66;padding:8px 24px;font-size:13px;color:var(--accent-light);display:flex;align-items:center;justify-content:center;gap:8px}
+.content{flex:1;overflow:auto;padding:32px;background:var(--bg-primary)}
+.page{max-width:900px}
+.page-sm{max-width:720px}
+
+/* Pages hidden by default */
+.page-view{display:none}
+.page-view.active{display:block}
+
+/* Landing */
+.landing{min-height:100vh;background:linear-gradient(135deg,#0e0e10 0%,#18181b 50%,#0e0e10 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;padding:24px;text-align:center}
+.landing-logo{width:64px;height:64px;background:var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto}
+.landing-title{font-size:42px;font-weight:700;letter-spacing:-1px;background:linear-gradient(135deg,#fff 0%,var(--accent-light) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.landing-subtitle{font-size:18px;color:var(--text-secondary);max-width:480px;line-height:1.6}
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;max-width:640px;width:100%}
+.feature{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:left}
+.feature-icon{font-size:24px;margin-bottom:8px}
+.feature-title{font-weight:600;margin-bottom:4px}
+.feature-desc{color:var(--text-secondary);font-size:13px}
+.btn-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
+.login-btn{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:8px;border:none;cursor:pointer}
+.login-btn:hover{background:var(--accent-hover)}
+.demo-btn{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--text-secondary);font-weight:600;font-size:15px;padding:14px 28px;border-radius:8px;border:1px solid var(--border);cursor:pointer}
+.demo-btn:hover{border-color:var(--accent);color:var(--text-primary)}
+
+/* Cards */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card-title{font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;font-size:15px}
+
+/* Overview */
+.page-title{font-size:28px;font-weight:700;margin-bottom:6px}
+.page-subtitle{color:var(--text-secondary);margin-bottom:32px}
+.status-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.status-left{display:flex;align-items:center;gap:12px}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot.on{background:var(--success);box-shadow:0 0 8px var(--success)}
+.dot.off{background:var(--text-muted)}
+.status-text{font-weight:600}
+.status-sub{color:var(--text-secondary);font-size:13px;margin-top:2px}
+.toggle-btn{padding:10px 20px;border-radius:8px;font-weight:600;color:#fff}
+.toggle-btn.on{background:var(--danger)}
+.toggle-btn.off{background:var(--accent)}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px}
+.info-item{background:var(--bg-secondary);border-radius:8px;padding:16px}
+.info-label{color:var(--text-muted);font-size:12px;margin-bottom:4px}
+.info-value{font-weight:700;font-size:20px}
+.builtin-list{display:flex;flex-direction:column;gap:0}
+.builtin-item{display:flex;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.builtin-item:last-child{border-bottom:none}
+code{background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-family:monospace;font-size:13px;color:var(--accent-light);flex-shrink:0;white-space:nowrap}
+.cmd-desc{color:var(--text-secondary);font-size:13px}
+
+/* Commands table */
+.tbl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.add-btn{background:var(--accent);color:#fff;font-weight:600;padding:10px 20px;border-radius:8px}
+.add-btn:hover{background:var(--accent-hover)}
+.tbl-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{padding:12px 16px;text-align:left;color:var(--text-muted);font-weight:600;font-size:12px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:14px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.response-cell{color:var(--text-secondary);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toggle-sw{width:36px;height:20px;border-radius:10px;position:relative;cursor:pointer;flex-shrink:0;display:inline-block}
+.toggle-sw.on{background:var(--accent)}.toggle-sw.off{background:var(--border)}
+.toggle-knob{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:3px;transition:left .15s}
+.toggle-sw.on .toggle-knob{left:19px}.toggle-sw.off .toggle-knob{left:3px}
+.act-row{display:flex;gap:8px}
+.edit-btn{background:var(--bg-hover);color:var(--text-primary);padding:6px 14px;border-radius:6px;font-weight:500}
+.del-btn{background:transparent;color:var(--danger);padding:6px 14px;border-radius:6px;font-weight:500;border:1px solid var(--danger)}
+.cooldown-cell{color:var(--text-secondary)}
+
+/* Timers */
+.timer-grid{display:flex;flex-direction:column;gap:12px}
+.timer-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:flex-start;gap:16px}
+.timer-body{flex:1}
+.timer-name{font-weight:600;margin-bottom:4px}
+.timer-msg{color:var(--text-secondary);font-size:13px;margin-bottom:8px}
+.timer-meta{display:flex;gap:16px;font-size:12px;color:var(--text-muted)}
+.timer-actions{display:flex;gap:8px;flex-shrink:0}
+
+/* Loyalty */
+.switch-row{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.big-toggle{width:44px;height:24px;border-radius:12px;position:relative;cursor:pointer;flex-shrink:0;transition:background .15s;display:inline-block}
+.big-toggle.on{background:var(--accent)}.big-toggle.off{background:var(--border)}
+.big-knob{width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;transition:left .2s}
+.big-toggle.on .big-knob{left:23px}.big-toggle.off .big-knob{left:3px}
+.switch-label{font-weight:600}
+.switch-sub{color:var(--text-secondary);font-size:13px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{margin-bottom:16px}
+.field label{display:block;font-weight:500;margin-bottom:6px;color:var(--text-secondary)}
+.hint{color:var(--text-muted);font-size:12px;margin-top:4px}
+.save-btn{background:var(--accent);color:#fff;font-weight:600;padding:10px 24px;border-radius:8px;margin-top:8px}
+.save-btn:hover{background:var(--accent-hover)}
+.lb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.lb-title{font-weight:600;font-size:15px}
+.refresh-btn{background:var(--bg-hover);color:var(--text-primary);padding:6px 14px;border-radius:6px;font-weight:500;font-size:13px}
+.rank-gold{font-weight:700;color:#ffd700}
+.rank-silver{font-weight:700;color:#c0c0c0}
+.rank-bronze{font-weight:700;color:#cd7f32}
+.rank-default{font-weight:700;color:var(--text-secondary)}
+.pts{font-weight:600;color:var(--accent-light)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-box{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:28px;width:100%;max-width:480px}
+.modal-title{font-weight:700;font-size:18px;margin-bottom:20px}
+.modal-row{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+.cancel-btn{background:var(--bg-hover);color:var(--text-primary);padding:10px 20px;border-radius:8px;font-weight:600}
+.confirm-btn{background:var(--accent);color:#fff;padding:10px 20px;border-radius:8px;font-weight:600}
+.hidden{display:none!important}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg-card);border:1px solid var(--accent);border-radius:8px;padding:12px 20px;color:var(--accent-light);font-weight:500;font-size:14px;z-index:200;opacity:0;transform:translateY(10px);transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- LANDING PAGE -->
+<div id="landing">
+  <div class="landing">
+    <div class="landing-logo">🎮</div>
+    <div>
+      <h1 class="landing-title">TwitchBot Dashboard</h1>
+      <p class="landing-subtitle" style="margin-top:12px">A powerful bot platform for Twitch streamers. Manage commands, timers, and loyalty points all in one place.</p>
+    </div>
+    <div class="features">
+      <div class="feature"><div class="feature-icon">🤖</div><div class="feature-title">Smart Bot</div><div class="feature-desc">Custom commands with cooldowns, auto-replies</div></div>
+      <div class="feature"><div class="feature-icon">⏱️</div><div class="feature-title">Timers</div><div class="feature-desc">Auto-post messages at configurable intervals</div></div>
+      <div class="feature"><div class="feature-icon">🏆</div><div class="feature-title">Loyalty Points</div><div class="feature-desc">Reward active chatters automatically</div></div>
+      <div class="feature"><div class="feature-icon">📊</div><div class="feature-title">Leaderboard</div><div class="feature-desc">Top viewer rankings in your chat</div></div>
+    </div>
+    <div class="btn-row">
+      <button class="login-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+        Login with Twitch
+      </button>
+      <button class="demo-btn" onclick="enterDemo()">▶ Try Demo</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">🎮</div>
+        <span class="brand-name">TwitchBot</span>
+      </div>
+      <nav>
+        <div class="nav-label">Menu</div>
+        <div class="nav-item active" onclick="showPage('overview',this)"><span>📊</span><span>Overview</span></div>
+        <div class="nav-item" onclick="showPage('commands',this)"><span>💬</span><span>Commands</span></div>
+        <div class="nav-item" onclick="showPage('timers',this)"><span>⏱️</span><span>Timers</span></div>
+        <div class="nav-item" onclick="showPage('loyalty',this)"><span>🏆</span><span>Loyalty</span></div>
+      </nav>
+      <div class="user-row">
+        <div class="avatar">SD</div>
+        <span class="user-name">StreamerDemo</span>
+        <button class="logout-btn" onclick="exitDemo()" title="Exit Demo">✕</button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="demo-banner"><span>👁</span><span>Demo mode — data is local and not saved. Click ✕ in the sidebar to exit.</span></div>
+      <div class="content">
+
+        <!-- OVERVIEW -->
+        <div id="page-overview" class="page-view active page-sm">
+          <h1 class="page-title">Overview</h1>
+          <p class="page-subtitle">Manage your bot and see channel status</p>
+
+          <div class="card">
+            <div class="card-title">🤖 Bot Status</div>
+            <div class="status-row">
+              <div class="status-left">
+                <div class="dot on" id="bot-dot"></div>
+                <div>
+                  <div class="status-text" id="bot-status-text">Connected</div>
+                  <div class="status-sub">Channel: #streamerdemo</div>
+                </div>
+              </div>
+              <button class="toggle-btn on" id="bot-toggle-btn" onclick="toggleBot()">Disconnect Bot</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📡 Channel Info</div>
+            <div class="info-grid">
+              <div class="info-item"><div class="info-label">Channel</div><div class="info-value">#streamerdemo</div></div>
+              <div class="info-item"><div class="info-label">Display Name</div><div class="info-value">StreamerDemo</div></div>
+              <div class="info-item"><div class="info-label">Bot Status</div><div class="info-value" id="bot-status-val" style="color:var(--success);font-size:16px">Active</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">⌨️ Built-in Commands</div>
+            <div class="builtin-list">
+              <div class="builtin-item"><code>!points</code><span class="cmd-desc">Shows your loyalty point balance</span></div>
+              <div class="builtin-item"><code>!top</code><span class="cmd-desc">Shows top 5 point holders</span></div>
+              <div class="builtin-item"><code>!addpoints [user] [n]</code><span class="cmd-desc">Mods only — add points to a user</span></div>
+              <div class="builtin-item"><code>!so [user]</code><span class="cmd-desc">Mods only — shoutout a user</span></div>
+              <div class="builtin-item"><code>!uptime</code><span class="cmd-desc">How long the stream has been live</span></div>
+              <div class="builtin-item"><code>!followage</code><span class="cmd-desc">How long you have been following</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COMMANDS -->
+        <div id="page-commands" class="page-view page">
+          <div class="tbl-header">
+            <h1 class="page-title" style="margin-bottom:0">Commands</h1>
+            <button class="add-btn" onclick="openAddCommand()">+ Add Command</button>
+          </div>
+          <div class="tbl-card">
+            <table>
+              <thead><tr><th>Trigger</th><th>Response</th><th>Cooldown</th><th>Enabled</th><th>Actions</th></tr></thead>
+              <tbody id="commands-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TIMERS -->
+        <div id="page-timers" class="page-view page">
+          <div class="tbl-header">
+            <h1 class="page-title" style="margin-bottom:0">Timers</h1>
+            <button class="add-btn" onclick="openAddTimer()">+ Add Timer</button>
+          </div>
+          <div class="timer-grid" id="timers-grid"></div>
+        </div>
+
+        <!-- LOYALTY -->
+        <div id="page-loyalty" class="page-view page-sm">
+          <h1 class="page-title">Loyalty Points</h1>
+
+          <div class="card">
+            <div class="card-title">Settings</div>
+            <div class="switch-row">
+              <div class="big-toggle on" id="loyalty-toggle" onclick="toggleLoyalty()"><div class="big-knob"></div></div>
+              <div>
+                <div class="switch-label" id="loyalty-toggle-label">Loyalty Points Enabled</div>
+                <div class="switch-sub">Award points to active chatters automatically</div>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field"><label>Points Name</label><input id="pts-name" value="StreamCoins"/><div class="hint">Shown in !points and !top commands</div></div>
+              <div class="field"><label>Points per Interval</label><input type="number" id="pts-amount" value="10" min="1"/></div>
+              <div class="field"><label>Earn Interval (minutes)</label><input type="number" id="pts-interval" value="5" min="1"/><div class="hint">How often active chatters earn points</div></div>
+            </div>
+            <button class="save-btn" onclick="saveLoyalty()">Save Settings</button>
+            <div id="loyalty-msg" style="color:var(--success);font-size:13px;margin-top:8px;display:none">Settings saved!</div>
+          </div>
+
+          <div class="card">
+            <div class="lb-header">
+              <div class="lb-title">Leaderboard — Top 10</div>
+              <button class="refresh-btn" onclick="toast('Leaderboard refreshed')">Refresh</button>
+            </div>
+            <table>
+              <thead><tr><th>Rank</th><th>Username</th><th id="lb-pts-col">StreamCoins</th></tr></thead>
+              <tbody id="leaderboard-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </div><!-- /main -->
+  </div>
+</div>
+
+<!-- COMMAND MODAL -->
+<div id="cmd-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-title" id="cmd-modal-title">Add Command</div>
+    <div class="field"><label>Trigger (without !)</label><input id="cmd-trigger" placeholder="e.g. hello"/></div>
+    <div class="field"><label>Response</label><textarea id="cmd-response" style="height:80px;resize:vertical" placeholder="Use {user} for the caller's name"></textarea></div>
+    <div class="field"><label>Cooldown (seconds)</label><input type="number" id="cmd-cooldown" value="5" min="0"/></div>
+    <div id="cmd-error" style="color:var(--danger);font-size:13px;margin-top:4px;display:none"></div>
+    <div class="modal-row">
+      <button class="cancel-btn" onclick="closeModal('cmd-modal')">Cancel</button>
+      <button class="confirm-btn" onclick="saveCommand()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIMER MODAL -->
+<div id="timer-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-title" id="timer-modal-title">Add Timer</div>
+    <div class="field"><label>Timer Name</label><input id="timer-name" placeholder="e.g. Social Media Reminder"/></div>
+    <div class="field"><label>Message</label><textarea id="timer-message" style="height:80px;resize:vertical" placeholder="Message to post in chat"></textarea></div>
+    <div class="field"><label>Interval (minutes)</label><input type="number" id="timer-interval" value="10" min="1"/></div>
+    <div id="timer-error" style="color:var(--danger);font-size:13px;margin-top:4px;display:none"></div>
+    <div class="modal-row">
+      <button class="cancel-btn" onclick="closeModal('timer-modal')">Cancel</button>
+      <button class="confirm-btn" onclick="saveTimer()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let botActive = true;
+let editingCmdId = null;
+let editingTimerId = null;
+let nextId = 100;
+
+let commands = [
+  {id:1,trigger:'hello',   response:'Hey {user}! Welcome to the stream! 👋',             cooldown:5,  enabled:true},
+  {id:2,trigger:'discord', response:'Join our Discord: https://discord.gg/example',       cooldown:30, enabled:true},
+  {id:3,trigger:'lurk',    response:'{user} is now lurking in the shadows 🌙',            cooldown:0,  enabled:true},
+  {id:4,trigger:'gg',      response:'GG! Thanks for watching {user}! 🎮',                cooldown:5,  enabled:true},
+  {id:5,trigger:'schedule',response:'We stream Mon/Wed/Fri at 8PM EST!',                  cooldown:15, enabled:false},
+  {id:6,trigger:'socials', response:'Follow on Twitter: @streamerdemo | IG: @streamerdemo',cooldown:20,enabled:true},
+];
+
+let timers = [
+  {id:1,name:'Discord Reminder', message:'👾 Join our Discord community! Link in description.',   interval_minutes:20, enabled:true},
+  {id:2,name:'Follow Reminder',  message:'❤️ Enjoying the stream? Drop a follow to get notified!',interval_minutes:30, enabled:true},
+  {id:3,name:'Hydration Check',  message:'💧 Hydration check! Have you had water recently?',      interval_minutes:45, enabled:true},
+  {id:4,name:'Schedule Post',    message:'📅 Stream schedule: Mon/Wed/Fri @ 8PM EST',              interval_minutes:60, enabled:false},
+];
+
+const leaderboard = [
+  {username:'superfan99',   points:48200},
+  {username:'xXgamerXx',   points:31750},
+  {username:'loyalty_king', points:27100},
+  {username:'nightwatcher', points:19400},
+  {username:'lurker_pro',   points:14800},
+  {username:'chatmaster',   points:11200},
+  {username:'viewerOne',    points:8900},
+  {username:'coolguy42',    points:5300},
+  {username:'just_watching',points:2100},
+  {username:'newchatter',   points:450},
+];
+
+// ── Navigation ─────────────────────────────────────────────────────────
+function enterDemo(){
+  document.getElementById('landing').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  renderCommands(); renderTimers(); renderLeaderboard();
+}
+function exitDemo(){
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('landing').classList.remove('hidden');
+}
+function showPage(name, el){
+  document.querySelectorAll('.page-view').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── Bot toggle ─────────────────────────────────────────────────────────
+function toggleBot(){
+  botActive = !botActive;
+  document.getElementById('bot-dot').className = 'dot ' + (botActive?'on':'off');
+  document.getElementById('bot-status-text').textContent = botActive ? 'Connected' : 'Disconnected';
+  document.getElementById('bot-status-val').textContent = botActive ? 'Active' : 'Inactive';
+  document.getElementById('bot-status-val').style.color = botActive ? 'var(--success)' : 'var(--text-muted)';
+  const btn = document.getElementById('bot-toggle-btn');
+  btn.textContent = botActive ? 'Disconnect Bot' : 'Connect Bot';
+  btn.className = 'toggle-btn ' + (botActive?'on':'off');
+  toast(botActive ? 'Bot connected to #streamerdemo' : 'Bot disconnected');
+}
+
+// ── Commands ───────────────────────────────────────────────────────────
+function renderCommands(){
+  const tb = document.getElementById('commands-tbody');
+  tb.innerHTML = commands.map(c=>`
+    <tr>
+      <td><code>!${c.trigger}</code></td>
+      <td><span class="response-cell">${c.response}</span></td>
+      <td class="cooldown-cell">${c.cooldown}s</td>
+      <td><div class="toggle-sw ${c.enabled?'on':'off'}" onclick="toggleCmd(${c.id})"><div class="toggle-knob"></div></div></td>
+      <td><div class="act-row"><button class="edit-btn" onclick="openEditCommand(${c.id})">Edit</button><button class="del-btn" onclick="deleteCmd(${c.id})">Delete</button></div></td>
+    </tr>`).join('');
+}
+function openAddCommand(){
+  editingCmdId=null;
+  document.getElementById('cmd-modal-title').textContent='Add Command';
+  document.getElementById('cmd-trigger').value='';
+  document.getElementById('cmd-response').value='';
+  document.getElementById('cmd-cooldown').value='5';
+  document.getElementById('cmd-error').style.display='none';
+  document.getElementById('cmd-modal').classList.remove('hidden');
+}
+function openEditCommand(id){
+  const c = commands.find(x=>x.id===id); if(!c) return;
+  editingCmdId=id;
+  document.getElementById('cmd-modal-title').textContent='Edit Command';
+  document.getElementById('cmd-trigger').value=c.trigger;
+  document.getElementById('cmd-response').value=c.response;
+  document.getElementById('cmd-cooldown').value=c.cooldown;
+  document.getElementById('cmd-error').style.display='none';
+  document.getElementById('cmd-modal').classList.remove('hidden');
+}
+function saveCommand(){
+  const trigger=document.getElementById('cmd-trigger').value.trim().toLowerCase();
+  const response=document.getElementById('cmd-response').value.trim();
+  const cooldown=Number(document.getElementById('cmd-cooldown').value);
+  const errEl=document.getElementById('cmd-error');
+  if(!trigger||!response){errEl.textContent='Trigger and response are required.';errEl.style.display='';return;}
+  if(!editingCmdId && commands.find(c=>c.trigger===trigger)){errEl.textContent='A command with that trigger already exists.';errEl.style.display='';return;}
+  if(editingCmdId){
+    const idx=commands.findIndex(c=>c.id===editingCmdId);
+    commands[idx]={...commands[idx],trigger,response,cooldown};
+    toast('Command updated');
+  } else {
+    commands.push({id:nextId++,trigger,response,cooldown,enabled:true});
+    toast('Command added');
+  }
+  closeModal('cmd-modal'); renderCommands();
+}
+function toggleCmd(id){
+  const c=commands.find(x=>x.id===id); if(!c) return;
+  c.enabled=!c.enabled; renderCommands();
+  toast(c.enabled ? `!${c.trigger} enabled` : `!${c.trigger} disabled`);
+}
+function deleteCmd(id){
+  if(!confirm('Delete this command?')) return;
+  commands=commands.filter(c=>c.id!==id); renderCommands(); toast('Command deleted');
+}
+
+// ── Timers ─────────────────────────────────────────────────────────────
+function renderTimers(){
+  const g=document.getElementById('timers-grid');
+  g.innerHTML=timers.map(t=>`
+    <div class="timer-card">
+      <div class="toggle-sw ${t.enabled?'on':'off'}" onclick="toggleTimer(${t.id})" style="margin-top:2px"><div class="toggle-knob"></div></div>
+      <div class="timer-body">
+        <div class="timer-name">${t.name}</div>
+        <div class="timer-msg">${t.message}</div>
+        <div class="timer-meta"><span>⏱ Every ${t.interval_minutes} minutes</span><span style="color:${t.enabled?'var(--success)':'var(--text-muted)'}">${t.enabled?'Active':'Paused'}</span></div>
+      </div>
+      <div class="timer-actions">
+        <button class="edit-btn" onclick="openEditTimer(${t.id})">Edit</button>
+        <button class="del-btn" onclick="deleteTimer(${t.id})">Delete</button>
+      </div>
+    </div>`).join('');
+}
+function openAddTimer(){
+  editingTimerId=null;
+  document.getElementById('timer-modal-title').textContent='Add Timer';
+  document.getElementById('timer-name').value='';
+  document.getElementById('timer-message').value='';
+  document.getElementById('timer-interval').value='10';
+  document.getElementById('timer-error').style.display='none';
+  document.getElementById('timer-modal').classList.remove('hidden');
+}
+function openEditTimer(id){
+  const t=timers.find(x=>x.id===id); if(!t) return;
+  editingTimerId=id;
+  document.getElementById('timer-modal-title').textContent='Edit Timer';
+  document.getElementById('timer-name').value=t.name;
+  document.getElementById('timer-message').value=t.message;
+  document.getElementById('timer-interval').value=t.interval_minutes;
+  document.getElementById('timer-error').style.display='none';
+  document.getElementById('timer-modal').classList.remove('hidden');
+}
+function saveTimer(){
+  const name=document.getElementById('timer-name').value.trim();
+  const message=document.getElementById('timer-message').value.trim();
+  const interval_minutes=Number(document.getElementById('timer-interval').value);
+  const errEl=document.getElementById('timer-error');
+  if(!name||!message){errEl.textContent='Name and message are required.';errEl.style.display='';return;}
+  if(editingTimerId){
+    const idx=timers.findIndex(t=>t.id===editingTimerId);
+    timers[idx]={...timers[idx],name,message,interval_minutes};
+    toast('Timer updated');
+  } else {
+    timers.push({id:nextId++,name,message,interval_minutes,enabled:true});
+    toast('Timer added');
+  }
+  closeModal('timer-modal'); renderTimers();
+}
+function toggleTimer(id){
+  const t=timers.find(x=>x.id===id); if(!t) return;
+  t.enabled=!t.enabled; renderTimers();
+  toast(t.enabled ? `"${t.name}" activated` : `"${t.name}" paused`);
+}
+function deleteTimer(id){
+  if(!confirm('Delete this timer?')) return;
+  timers=timers.filter(t=>t.id!==id); renderTimers(); toast('Timer deleted');
+}
+
+// ── Loyalty ────────────────────────────────────────────────────────────
+let loyaltyEnabled=true;
+function toggleLoyalty(){
+  loyaltyEnabled=!loyaltyEnabled;
+  const el=document.getElementById('loyalty-toggle');
+  el.className='big-toggle '+(loyaltyEnabled?'on':'off');
+  document.getElementById('loyalty-toggle-label').textContent=loyaltyEnabled?'Loyalty Points Enabled':'Loyalty Points Disabled';
+}
+function saveLoyalty(){
+  const name=document.getElementById('pts-name').value||'points';
+  document.getElementById('lb-pts-col').textContent=name;
+  const msg=document.getElementById('loyalty-msg');
+  msg.style.display=''; setTimeout(()=>msg.style.display='none',2500);
+  toast('Loyalty settings saved');
+}
+function renderLeaderboard(){
+  const rankClass=['rank-gold','rank-silver','rank-bronze'];
+  document.getElementById('leaderboard-tbody').innerHTML=leaderboard.map((r,i)=>`
+    <tr>
+      <td><span class="${rankClass[i]||'rank-default'}">#${i+1}</span></td>
+      <td>${r.username}</td>
+      <td><span class="pts">${r.points.toLocaleString()}</span></td>
+    </tr>`).join('');
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function closeModal(id){
+  document.getElementById(id).classList.add('hidden');
+}
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m) m.classList.add('hidden')});
+});
+
+let toastTimer;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>
